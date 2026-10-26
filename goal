@@ -1,0 +1,29 @@
+Build a universal, configurable sports scoring app using Flutter.
+
+The app will let users:
+
+Select a sport and match format.
+
+Add individual players or teams of any supported size.
+
+Track scores, servers, receivers, and serving positions.
+
+Assign matches to specific courts.
+
+Run multiple matches independently.
+
+Save match history and results offline.
+
+Primary goals
+
+Flexible player configuration: Support singles, doubles, triples, team-based sports, and configurable formats where permitted.
+
+Sport-specific scoring: Automatically calculate points, games, sets, winning conditions, and serving rotations.
+
+Accurate service tracking: Identify the serving player, receiving player, serving side, and service court whenever the sport requires them.
+
+Court management: Organize active matches by court.
+
+Offline-first operation: Keep scoring available without internet access.
+
+Expandable architecture: Make it straightforward to add new sports and rule variations.

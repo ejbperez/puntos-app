@@ -1,0 +1,11 @@
+{
+  "name": "Puntos App",
+  "short_name": "Puntos App",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#0175C2",
+  "description": "A cross-platform, offline-first sports scoring app.",
+  "orientation": "portrait-primary",
+  "prefer_related_applications": false
+}
