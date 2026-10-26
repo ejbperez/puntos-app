@@ -1,0 +1,2 @@
+# puntos-app
+game scorer
