@@ -20,6 +20,12 @@ Codemagic-managed certificates and provisioning profiles. In Codemagic, add
 the App Store Connect signing certificate and provisioning profile for this
 bundle identifier to the connected team before running the workflow.
 
+The `android-release` workflow builds a signed AAB and APK. In Codemagic,
+upload the production Android keystore under **Code signing identities →
+Android keystores** with the reference name `puntos-app-release`. Keep an
+independent backup of this keystore; it must be reused for future Google Play
+updates. The Android package name is `com.ejbperez.puntos_app`.
+
 The starter uses Hive CE for local persistence. The storage boundary is `MatchRepository`, so a relational database can be introduced later without coupling the UI to storage.
 
 ## Architecture
