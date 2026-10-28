@@ -25,7 +25,7 @@ class _PuntosAppState extends State<PuntosApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Puntos App',
+      title: 'Puntos',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,

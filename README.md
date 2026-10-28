@@ -1,4 +1,4 @@
-# Puntos App
+# Puntos
 
 An offline-first Flutter starter for running multiple sports matches independently.
 

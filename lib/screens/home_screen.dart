@@ -112,7 +112,7 @@ class HomeScreen extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Puntos App',
+                  'Puntos',
                   style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.w800,
@@ -121,11 +121,12 @@ class HomeScreen extends StatelessWidget {
                   ),
                 ),
                 Text(
-                  'Score • Play • Enjoy',
+                  'By EJ',
                   style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w500,
-                    color: AppColors.textSecondaryDark,
+                    fontSize: 10,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 0.5,
+                    color: AppColors.primaryBrown,
                   ),
                 ),
               ],
