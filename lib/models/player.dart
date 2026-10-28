@@ -2,6 +2,12 @@ enum TeamSide { teamA, teamB }
 
 enum CourtSide { left, right }
 
+extension CourtSidePosition on CourtSide {
+  CourtSide get opposite => this == CourtSide.right
+      ? CourtSide.left
+      : CourtSide.right;
+}
+
 class Player {
   const Player({
     required this.id,

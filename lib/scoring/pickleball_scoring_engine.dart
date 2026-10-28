@@ -65,9 +65,7 @@ class PickleballScoringEngine implements ScoringEngine {
           orElse: () => serving.firstWhere(
               (p) => p.currentCourtSide == serviceCourt,
               orElse: () => serving.first));
-      final receiver = receiving.firstWhere(
-          (p) => p.currentCourtSide == serviceCourt,
-          orElse: () => receiving.first);
+      final receiver = _receiverFor(receiving, serviceCourt.opposite);
       serverId = server.id;
       receiverId = receiver.id;
     } else if (match.format.playersPerTeam == 2 && serverNumber == 1) {
@@ -79,7 +77,7 @@ class PickleballScoringEngine implements ScoringEngine {
           orElse: () => serving.first);
       serverId = server.id;
       receiverId = receiving.firstWhere(
-          (p) => p.currentCourtSide == server.currentCourtSide,
+          (p) => p.currentCourtSide == server.currentCourtSide.opposite,
           orElse: () => receiving.first).id;
       serviceCourt = server.currentCourtSide;
     } else {
@@ -93,7 +91,7 @@ class PickleballScoringEngine implements ScoringEngine {
           (p) => p.currentCourtSide == CourtSide.right,
           orElse: () => serving.first);
       final receiver = receiving.firstWhere(
-          (p) => p.currentCourtSide == CourtSide.right,
+          (p) => p.currentCourtSide == CourtSide.right.opposite,
           orElse: () => receiving.first);
       serverId = server.id;
       receiverId = receiver.id;
@@ -132,7 +130,7 @@ class PickleballScoringEngine implements ScoringEngine {
     final serving = winner == TeamSide.teamA ? match.teamAPlayers : match.teamBPlayers;
     final receiving = winner == TeamSide.teamA ? match.teamBPlayers : match.teamAPlayers;
     final server = serving.first;
-    final receiver = receiving.first;
+    final receiver = _receiverFor(receiving, server.currentCourtSide.opposite);
     var nextPlayersA = winner == TeamSide.teamA ? serving : match.teamAPlayers;
     var nextPlayersB = winner == TeamSide.teamB ? serving : match.teamBPlayers;
     if (match.format.playersPerTeam == 1) {
@@ -208,5 +206,11 @@ class PickleballScoringEngine implements ScoringEngine {
 
   static List<Player> _setSingleSide(List<Player> players, CourtSide side) =>
       players.map((p) => p.copyWith(currentCourtSide: side)).toList();
+
+  static Player _receiverFor(List<Player> players, CourtSide side) =>
+      players.firstWhere(
+        (p) => p.currentCourtSide == side,
+        orElse: () => players.first,
+      );
 
 }

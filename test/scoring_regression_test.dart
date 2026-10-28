@@ -227,4 +227,43 @@ void main() {
     expect(afterTennis.currentServer!.currentCourtSide, CourtSide.left);
     expect(afterTennis.currentReceiver!.currentCourtSide, CourtSide.right);
   });
+
+  test('badminton doubles receiver follows the opposite service court', () {
+    final initial = Match.createDefault().copyWith(
+      teamAScore: 18,
+      teamBScore: 16,
+      currentServerId: 'a1',
+      currentReceiverId: 'b1',
+    );
+
+    final result = const BadmintonScoringEngine()
+        .rallyWonBy(initial, TeamSide.teamA);
+
+    expect(result.currentServerId, 'a1');
+    expect(result.currentReceiverId, 'b2');
+    expect(result.currentReceiver!.currentCourtSide, CourtSide.right);
+  });
+
+  test('pickleball doubles receiver follows the opposite service court', () {
+    final initial = Match.createDefault().copyWith(
+      sport: SportCatalog.pickleball,
+      teamAScore: 0,
+      teamBScore: 0,
+      currentServerId: 'a1',
+      currentReceiverId: 'b1',
+      rule: const MatchRule(
+        pointsPerGame: 11,
+        gamesPerMatch: 3,
+        winByTwo: true,
+        isSideOutScoring: true,
+      ),
+    );
+
+    final result = const PickleballScoringEngine()
+        .rallyWonBy(initial, TeamSide.teamA);
+
+    expect(result.currentServerId, 'a1');
+    expect(result.currentReceiverId, 'b2');
+    expect(result.currentReceiver!.currentCourtSide, CourtSide.right);
+  });
 }

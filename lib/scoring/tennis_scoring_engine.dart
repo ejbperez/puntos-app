@@ -190,7 +190,12 @@ class TennisScoringEngine implements ScoringEngine {
     final receiving = server.team == TeamSide.teamA
         ? match.teamBPlayers
         : match.teamAPlayers;
-    final receiver = receiving.first;
+    final receiver = match.format.playersPerTeam == 2
+        ? receiving.firstWhere(
+            (p) => p.currentCourtSide == server.currentCourtSide.opposite,
+            orElse: () => receiving.first,
+          )
+        : receiving.first;
     final a = match.teamAPlayers
         .map((p) => p.copyWith(isServer: p.id == server.id))
         .toList();

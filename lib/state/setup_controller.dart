@@ -347,14 +347,15 @@ class SetupController extends ChangeNotifier {
     final servingTeam = server.team;
     final receiverPlayers =
         servingTeam == TeamSide.teamA ? _teamBPlayers : _teamAPlayers;
-    final receiverSide = _format.playersPerTeam == 1 ? CourtSide.left : null;
+    final receiverSide = _format.playersPerTeam == 1
+        ? CourtSide.left
+        : server.currentCourtSide.opposite;
 
     // Initialize isServer flags
     final updatedAPlayers = _teamAPlayers
         .map((p) => p.copyWith(
               isServer: p.id == _startingServerId,
-              currentCourtSide: p.id == receiverPlayers.first.id &&
-                      receiverSide != null
+              currentCourtSide: p.id == receiverPlayers.first.id
                   ? receiverSide
                   : p.currentCourtSide,
             ))
@@ -362,8 +363,7 @@ class SetupController extends ChangeNotifier {
     final updatedBPlayers = _teamBPlayers
         .map((p) => p.copyWith(
               isServer: p.id == _startingServerId,
-              currentCourtSide: p.id == receiverPlayers.first.id &&
-                      receiverSide != null
+              currentCourtSide: p.id == receiverPlayers.first.id
                   ? receiverSide
                   : p.currentCourtSide,
             ))

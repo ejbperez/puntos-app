@@ -40,7 +40,10 @@ class BadmintonScoringEngine implements ScoringEngine {
           ? match.teamBPlayers
           : match.teamAPlayers;
       final serverId = serving.first.id;
-      final receiverId = receiving.first.id;
+      final server = serving.first;
+      final receiverId = _receiverFor(
+              receiving, server.currentCourtSide.opposite)
+          .id;
       var nextPlayersA = winner == TeamSide.teamA
           ? _markServer(serving, serverId)
           : match.teamAPlayers;
@@ -94,10 +97,7 @@ class BadmintonScoringEngine implements ScoringEngine {
           );
     final receiver = match.format.playersPerTeam == 1
         ? receivingPlayers.first
-        : receivingPlayers.firstWhere(
-            (p) => p.currentCourtSide == court,
-            orElse: () => receivingPlayers.first,
-          );
+        : _receiverFor(receivingPlayers, court.opposite);
     if (match.format.playersPerTeam == 1) {
       final receiverCourt = court == CourtSide.right
           ? CourtSide.left
@@ -175,4 +175,10 @@ class BadmintonScoringEngine implements ScoringEngine {
 
   static List<Player> _setSingleSide(List<Player> players, CourtSide side) =>
       players.map((p) => p.copyWith(currentCourtSide: side)).toList();
+
+  static Player _receiverFor(List<Player> players, CourtSide side) =>
+      players.firstWhere(
+        (p) => p.currentCourtSide == side,
+        orElse: () => players.first,
+      );
 }
