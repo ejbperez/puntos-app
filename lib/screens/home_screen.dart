@@ -321,30 +321,30 @@ class HomeScreen extends StatelessWidget {
     List activeMatches,
     List completedMatches,
   ) {
-    final liveMatch = activeMatches.isNotEmpty
-        ? activeMatches.first
-        : controller.currentMatch;
+    final liveMatch = activeMatches.isNotEmpty ? activeMatches.first : null;
     final completedMatch =
         completedMatches.isNotEmpty ? completedMatches.first : null;
 
     return Column(
       children: [
-        RecentMatchCard(
-          match: liveMatch,
-          statusOverride: 'Live',
-          onTap: () {
-            controller.setCurrentMatch(liveMatch);
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) =>
-                    LiveScoreboardScreen(controller: controller),
-              ),
-            );
-          },
-        ),
-        if (completedMatch != null) ...[
+        if (liveMatch != null)
+          RecentMatchCard(
+            match: liveMatch,
+            statusOverride: 'Live',
+            onTap: () {
+              controller.setCurrentMatch(liveMatch);
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) =>
+                      LiveScoreboardScreen(controller: controller),
+                ),
+              );
+            },
+          ),
+        if (liveMatch != null && completedMatch != null)
           const SizedBox(height: 10),
+        if (completedMatch != null) ...[
           RecentMatchCard(
             match: completedMatch,
             statusOverride: 'Completed',

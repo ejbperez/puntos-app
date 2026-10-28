@@ -161,6 +161,22 @@ void main() {
     expect(controller.activeMatches.first.id, newMatch.id);
   });
 
+  test('ending a match removes it from live matches and keeps it in history', () {
+    final controller = MatchController();
+    final activeId = controller.activeMatches.first.id;
+
+    controller.endMatch();
+
+    expect(controller.activeMatches.any((match) => match.id == activeId),
+        isFalse);
+    expect(
+        controller.completedMatches
+            .where((match) => match.id == activeId)
+            .single
+            .completed,
+        isTrue);
+  });
+
   test('matches with no players do not crash server or receiver lookup', () {
     final match = Match.createDefault().copyWith(
       teamAPlayers: const [],
