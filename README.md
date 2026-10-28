@@ -35,3 +35,9 @@ The starter uses Hive CE for local persistence. The storage boundary is `MatchRe
 - `main.dart`: initial UI shell.
 
 The current scoring screen is intentionally a vertical slice: create a match, assign a court, increment participant scores, and persist the state offline. Sport-specific rules, sets/games, court management, service positions, match completion, and history are the next domain-layer additions.
+
+## Vercel web deployment
+
+Vercel uses `vercel.sh` to install the stable Flutter SDK and build the web
+release. The generated site is published from `build/web`, as configured in
+`vercel.json`. No Flutter SDK or build artifacts are stored in the repository.
