@@ -22,6 +22,18 @@ void main() {
     expect(setup.teamAPlayers.first.name, 'Miguel Santos');
   });
 
+  test('new doubles setup keeps receiver and partner on opposite court sides', () {
+    final match = SetupController().buildMatch();
+    final receiver = match.currentReceiver!;
+    final receivingPlayers = receiver.team == TeamSide.teamA
+        ? match.teamAPlayers
+        : match.teamBPlayers;
+    final partner = receivingPlayers.firstWhere((p) => p.id != receiver.id);
+
+    expect(receiver.currentCourtSide, match.serviceCourtSide.opposite);
+    expect(partner.currentCourtSide, match.serviceCourtSide);
+  });
+
   test('traditional pickleball side-out does not award receiving points', () {
     final match = Match.createDefault().copyWith(
       sport: SportCatalog.pickleball,

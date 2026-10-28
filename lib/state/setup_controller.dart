@@ -350,21 +350,28 @@ class SetupController extends ChangeNotifier {
     final receiverSide = _format.playersPerTeam == 1
         ? CourtSide.left
         : server.currentCourtSide.opposite;
+    final receivingTeam = servingTeam == TeamSide.teamA
+        ? TeamSide.teamB
+        : TeamSide.teamA;
 
     // Initialize isServer flags
     final updatedAPlayers = _teamAPlayers
         .map((p) => p.copyWith(
               isServer: p.id == _startingServerId,
-              currentCourtSide: p.id == receiverPlayers.first.id
-                  ? receiverSide
+              currentCourtSide: p.team == receivingTeam
+                  ? (p.id == receiverPlayers.first.id
+                      ? receiverSide
+                      : server.currentCourtSide)
                   : p.currentCourtSide,
             ))
         .toList();
     final updatedBPlayers = _teamBPlayers
         .map((p) => p.copyWith(
               isServer: p.id == _startingServerId,
-              currentCourtSide: p.id == receiverPlayers.first.id
-                  ? receiverSide
+              currentCourtSide: p.team == receivingTeam
+                  ? (p.id == receiverPlayers.first.id
+                      ? receiverSide
+                      : server.currentCourtSide)
                   : p.currentCourtSide,
             ))
         .toList();

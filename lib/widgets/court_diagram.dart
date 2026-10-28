@@ -159,8 +159,11 @@ class _CourtPainter extends CustomPainter {
       final vertical = player.currentCourtSide == CourtSide.right ? .67 : .33;
       final sameSide = all.where((p) => p.team == player.team &&
           p.currentCourtSide == player.currentCourtSide).toList();
-      final offset = sameSide.indexOf(player) * 22.0 -
-          ((sameSide.length - 1) * 11.0);
+      // Keep markers separated even when an older persisted match contains
+      // two doubles players on the same side of the court.
+      final markerSpacing = sameSide.length > 1 ? 32.0 : 0.0;
+      final offset = sameSide.indexOf(player) * markerSpacing -
+          ((sameSide.length - 1) * markerSpacing / 2);
       final center = Offset(teamRect.center.dx + offset,
           teamRect.top + teamRect.height * vertical);
       final server = player.id == match.currentServerId;
