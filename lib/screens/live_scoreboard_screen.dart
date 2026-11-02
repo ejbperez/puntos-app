@@ -23,14 +23,21 @@ class LiveScoreboardScreen extends StatelessWidget {
       builder: (context, _) {
         final match = controller.currentMatch;
 
-        return Scaffold(
-          backgroundColor: AppColors.darkBackground,
-          appBar: _buildAppBar(context),
-          body: SafeArea(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              child: Column(
-                children: [
+        return PopScope<void>(
+          canPop: match.completed,
+          onPopInvokedWithResult: (didPop, _) {
+            if (!didPop && !match.completed) {
+              _confirmLeaveMatch(context, match);
+            }
+          },
+          child: Scaffold(
+            backgroundColor: AppColors.darkBackground,
+            appBar: _buildAppBar(context, match),
+            body: SafeArea(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                child: Column(
+                  children: [
                   // Match Info Header Pill
                   _buildMatchInfoCard(match),
                   const SizedBox(height: 14),
@@ -62,7 +69,8 @@ class LiveScoreboardScreen extends StatelessWidget {
                   // End Match Button
                   _buildEndMatchButton(context, match),
                   const SizedBox(height: 16),
-                ],
+                  ],
+                ),
               ),
             ),
           ),
@@ -71,14 +79,20 @@ class LiveScoreboardScreen extends StatelessWidget {
     );
   }
 
-  PreferredSizeWidget _buildAppBar(BuildContext context) {
+  PreferredSizeWidget _buildAppBar(BuildContext context, Match match) {
     return AppBar(
       backgroundColor: AppColors.darkBackground,
       elevation: 0,
       leading: IconButton(
         icon:
             const Icon(Icons.arrow_back_ios_new, color: Colors.white, size: 20),
-        onPressed: () => Navigator.pop(context),
+        onPressed: () {
+          if (match.completed) {
+            Navigator.pop(context);
+          } else {
+            _confirmLeaveMatch(context, match);
+          }
+        },
       ),
       title: const Text(
         'Live Scoreboard',
@@ -446,6 +460,42 @@ class LiveScoreboardScreen extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  Future<void> _confirmLeaveMatch(BuildContext context, Match match) async {
+    final shouldEnd = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        backgroundColor: AppColors.cardDark,
+        title: const Text('Match in progress',
+            style: TextStyle(color: Colors.white)),
+        content: Text(
+          'You are scoring ${match.teamAName} vs ${match.teamBName}. '
+          'Leaving now will end the match and save the current result to History. '
+          'Do you want to end the match?',
+          style: const TextStyle(color: AppColors.textSecondaryLight),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Keep Scoring',
+                style: TextStyle(color: AppColors.textMutedDark)),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primaryBrown),
+            child: const Text('End Match'),
+          ),
+        ],
+      ),
+    );
+
+    if (shouldEnd == true && context.mounted) {
+      controller.endMatch();
+      await controller.flushPersistence();
+      if (context.mounted) Navigator.pop(context);
+    }
   }
 
   void _showMatchOptions(BuildContext context) {

@@ -13,13 +13,11 @@ class HomeScreen extends StatelessWidget {
   const HomeScreen({
     super.key,
     required this.controller,
-    required this.onNavigateToCourts,
     required this.onNavigateToHistory,
     required this.onNavigateToSettings,
   });
 
   final MatchController controller;
-  final VoidCallback onNavigateToCourts;
   final VoidCallback onNavigateToHistory;
   final VoidCallback onNavigateToSettings;
 
@@ -272,37 +270,28 @@ class HomeScreen extends StatelessWidget {
   Widget _buildQuickActions(BuildContext context) {
     return Column(
       children: [
-        Row(
-          children: [
-            Expanded(
-              child: QuickActionCard(
-                title: 'New Match',
-                subtitle:
-                    'Start a new game and set up players, format and rules.',
-                icon: const Icon(Icons.add,
-                    color: AppColors.primaryBrown, size: 22),
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) =>
-                          MatchSetupScreen(controller: controller),
-                    ),
-                  );
-                },
+        QuickActionCard(
+          isFullWidth: true,
+          title: 'New Match',
+          subtitle: 'Start a new game and set up players, format and rules.',
+          icon: const Icon(Icons.add,
+              color: AppColors.primaryBrown, size: 22),
+          onTap: () {
+            if (controller.activeMatches.isNotEmpty) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('End the current match before starting a new one.'),
+                ),
+              );
+              return;
+            }
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => MatchSetupScreen(controller: controller),
               ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: QuickActionCard(
-                title: 'Courts',
-                subtitle: 'View active matches and manage courts.',
-                icon: const Icon(Icons.grid_view_rounded,
-                    color: AppColors.primaryBrown, size: 22),
-                onTap: onNavigateToCourts,
-              ),
-            ),
-          ],
+            );
+          },
         ),
         const SizedBox(height: 12),
         QuickActionCard(

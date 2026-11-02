@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../state/match_controller.dart';
 import '../theme/app_colors.dart';
-import 'courts_screen.dart';
 import 'history_screen.dart';
 import 'home_screen.dart';
 import 'settings_screen.dart';
@@ -30,17 +29,15 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
     final screens = [
       HomeScreen(
         controller: widget.controller,
-        onNavigateToCourts: () => _navigateToIndex(1),
-        onNavigateToHistory: () => _navigateToIndex(2),
-        onNavigateToSettings: () => _navigateToIndex(3),
+        onNavigateToHistory: () => _navigateToIndex(1),
+        onNavigateToSettings: () => _navigateToIndex(2),
       ),
-      CourtsScreen(controller: widget.controller),
       HistoryScreen(controller: widget.controller),
       const SettingsScreen(),
     ];
 
     // Determine nav bar theme based on current screen
-    final isDarkScreen = _currentIndex == 1 || _currentIndex == 3;
+    final isDarkScreen = _currentIndex == 2;
     final navBg =
         isDarkScreen ? AppColors.darkBackground : AppColors.lightBackground;
     final unselectedColor =
@@ -80,13 +77,6 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
                 ),
                 _buildNavItem(
                   index: 1,
-                  label: 'Courts',
-                  icon: const Icon(Icons.grid_view_rounded, size: 22),
-                  selectedColor: selectedColor,
-                  unselectedColor: unselectedColor,
-                ),
-                _buildNavItem(
-                  index: 2,
                   label: 'History',
                   icon: const Icon(Icons.history_rounded, size: 22),
                   selectedColor: selectedColor,

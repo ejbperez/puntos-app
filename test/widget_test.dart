@@ -123,13 +123,25 @@ void main() {
       await tester.tap(undoButton);
       await tester.pumpAndSettle();
 
-      // Go back to Home
+      // Leaving an active match requires confirmation.
       await tester.tap(find.byIcon(Icons.arrow_back_ios_new));
       await tester.pumpAndSettle();
+      expect(find.text('Match in progress'), findsOneWidget);
+      expect(find.text('Keep Scoring'), findsOneWidget);
+      expect(find.text('End Match'), findsOneWidget);
 
-      // Verify bottom nav tab switching
-      expect(find.text('Courts'), findsWidgets);
-      await tester.tap(find.text('Courts').first);
+      await tester.tap(find.text('Keep Scoring'));
+      await tester.pumpAndSettle();
+      expect(find.text('Live Scoreboard'), findsOneWidget);
+
+      await tester.tap(find.byIcon(Icons.arrow_back_ios_new));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('End Match'));
+      await tester.pumpAndSettle();
+
+      // Verify the Courts module is gone and bottom nav still works.
+      expect(find.text('Courts'), findsNothing);
+      await tester.tap(find.text('History').first);
       await tester.pumpAndSettle();
 
       await tester.tap(find.text('Settings').first);

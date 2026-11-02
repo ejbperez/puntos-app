@@ -23,10 +23,13 @@ class MatchController extends ChangeNotifier {
   late Match _currentMatch;
   List<Match> _activeMatches = [];
   List<Match> _completedMatches = [];
+  Future<void> _pendingPersistence = Future<void>.value();
+  String? _persistenceError;
 
   Match get currentMatch => _currentMatch;
-  List<Match> get activeMatches => _activeMatches;
-  List<Match> get completedMatches => _completedMatches;
+  List<Match> get activeMatches => List.unmodifiable(_activeMatches);
+  List<Match> get completedMatches => List.unmodifiable(_completedMatches);
+  String? get persistenceError => _persistenceError;
 
   ScoringEngine _engineFor(SportDefinition sport) {
     switch (sport.id) {
@@ -44,69 +47,6 @@ class MatchController extends ChangeNotifier {
   void _initializeData() {
     // Seed default match matching Phone 2 mockup (Badminton Doubles 18 - 16)
     _currentMatch = Match.createDefault();
-
-    // Court 2: Pickleball Doubles
-    final court2 = Match(
-      id: 'match_pickleball_1',
-      sport: SportCatalog.pickleball,
-      format: MatchFormat.doubles,
-      court: 'Court 2',
-      teamAName: 'Team A',
-      teamBName: 'Team B',
-      teamAPlayers: const [
-        Player(id: 'pa1', name: 'John Miller', team: TeamSide.teamA, slot: 1),
-        Player(id: 'pa2', name: 'Dave Wilson', team: TeamSide.teamA, slot: 2),
-      ],
-      teamBPlayers: const [
-        Player(id: 'pb1', name: 'Sam Taylor', team: TeamSide.teamB, slot: 1),
-        Player(id: 'pb2', name: 'Mike Brown', team: TeamSide.teamB, slot: 2),
-      ],
-      teamAScore: 7,
-      teamBScore: 5,
-      currentGame: 1,
-      teamAGames: 0,
-      teamBGames: 0,
-      servingTeam: TeamSide.teamB,
-      serverNumber: 1,
-      currentServerId: 'pb1',
-      currentReceiverId: 'pa1',
-      serviceCourtSide: CourtSide.right,
-      rule: const MatchRule(
-          pointsPerGame: 11, gamesPerMatch: 3, isSideOutScoring: true),
-      startedAt: DateTime.now().subtract(const Duration(minutes: 15)),
-      completed: false,
-    );
-
-    // Court 3: Tennis Singles
-    final court3 = Match(
-      id: 'match_tennis_1',
-      sport: SportCatalog.tennis,
-      format: MatchFormat.singles,
-      court: 'Court 3',
-      teamAName: 'Roger F.',
-      teamBName: 'Rafael N.',
-      teamAPlayers: const [
-        Player(id: 'ta1', name: 'Roger F.', team: TeamSide.teamA, slot: 1),
-      ],
-      teamBPlayers: const [
-        Player(id: 'tb1', name: 'Rafael N.', team: TeamSide.teamB, slot: 1),
-      ],
-      teamAScore: 0,
-      teamBScore: 0,
-      teamAGames: 4,
-      teamBGames: 3,
-      tennisGamePointsA: 2, // 30
-      tennisGamePointsB: 1, // 15
-      currentGame: 1,
-      servingTeam: TeamSide.teamB,
-      currentServerId: 'tb1',
-      currentReceiverId: 'ta1',
-      serviceCourtSide: CourtSide.left,
-      rule: const MatchRule(
-          pointsPerGame: 6, gamesPerMatch: 3, useAdvantage: true),
-      startedAt: DateTime.now().subtract(const Duration(minutes: 40)),
-      completed: false,
-    );
 
     // Completed Match Archive (Pickleball)
     final completedCourt3 = Match(
@@ -138,7 +78,7 @@ class MatchController extends ChangeNotifier {
       winner: TeamSide.teamA,
     );
 
-    _activeMatches = [_currentMatch, court2, court3];
+    _activeMatches = [_currentMatch];
     _completedMatches = [completedCourt3];
   }
 
@@ -268,6 +208,24 @@ class MatchController extends ChangeNotifier {
   }
 
   void _persistMatch(Match match) {
-    repository?.save(match);
+    final currentRepository = repository;
+    if (currentRepository == null) return;
+
+    _pendingPersistence = _pendingPersistence.then(
+      (_) => _writeMatch(currentRepository, match),
+      onError: (_, __) => _writeMatch(currentRepository, match),
+    );
+  }
+
+  Future<void> flushPersistence() => _pendingPersistence;
+
+  Future<void> _writeMatch(MatchRepository repository, Match match) async {
+    try {
+      await repository.save(match);
+      _persistenceError = null;
+    } on Object catch (error) {
+      _persistenceError = 'Unable to save match: $error';
+      notifyListeners();
+    }
   }
 }

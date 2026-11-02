@@ -7,7 +7,11 @@ class PickleballScoringEngine implements ScoringEngine {
 
   @override
   Match rallyWonBy(Match match, TeamSide winner) {
-    if (match.completed) return match;
+    if (match.completed ||
+        match.teamAPlayers.isEmpty ||
+        match.teamBPlayers.isEmpty) {
+      return match;
+    }
     final history = [...match.history, match.toSnapshot()];
     final sideOut = match.rule.isSideOutScoring;
     final servingWon = match.servingTeam == winner;

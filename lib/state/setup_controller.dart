@@ -47,6 +47,9 @@ class SetupController extends ChangeNotifier {
     ),
   ];
 
+  List<Player> _teamAFormatReserve = [];
+  List<Player> _teamBFormatReserve = [];
+
   late int _gamesPerMatch;
   late int _pointsPerGame;
   late bool _winByTwo;
@@ -73,8 +76,8 @@ class SetupController extends ChangeNotifier {
   int get currentStep => _currentStep;
   String get teamAName => _teamAName;
   String get teamBName => _teamBName;
-  List<Player> get teamAPlayers => _teamAPlayers;
-  List<Player> get teamBPlayers => _teamBPlayers;
+  List<Player> get teamAPlayers => List.unmodifiable(_teamAPlayers);
+  List<Player> get teamBPlayers => List.unmodifiable(_teamBPlayers);
   int get gamesPerMatch => _gamesPerMatch;
   int get pointsPerGame => _pointsPerGame;
   bool get winByTwo => _winByTwo;
@@ -130,6 +133,8 @@ class SetupController extends ChangeNotifier {
     _format = format;
     if (format.playersPerTeam == 1) {
       // Singles: exactly 1 player per team
+      _teamAFormatReserve = _teamAPlayers.skip(1).toList();
+      _teamBFormatReserve = _teamBPlayers.skip(1).toList();
       _teamAPlayers = [
         _teamAPlayers.first.copyWith(slot: 1, currentCourtSide: CourtSide.right)
       ];
@@ -140,26 +145,34 @@ class SetupController extends ChangeNotifier {
     } else if (format.playersPerTeam == 2) {
       // Doubles: exactly 2 players per team
       if (_teamAPlayers.length < 2) {
-        _teamAPlayers.add(
-            const Player(
-              id: 'a2',
-              name: 'Player 2',
-            team: TeamSide.teamA,
-            slot: 2,
-            currentCourtSide: CourtSide.left,
-          ),
-        );
+        _teamAPlayers = [
+          ..._teamAPlayers,
+          (_teamAFormatReserve.isNotEmpty
+                  ? _teamAFormatReserve.first
+                  : const Player(
+                      id: 'a2',
+                      name: 'Player 2',
+                      team: TeamSide.teamA,
+                      slot: 2,
+                      currentCourtSide: CourtSide.left,
+                    ))
+              .copyWith(slot: 2, currentCourtSide: CourtSide.left),
+        ];
       }
       if (_teamBPlayers.length < 2) {
-        _teamBPlayers.add(
-            const Player(
-              id: 'b2',
-              name: 'Player 2',
-            team: TeamSide.teamB,
-            slot: 2,
-            currentCourtSide: CourtSide.left,
-          ),
-        );
+        _teamBPlayers = [
+          ..._teamBPlayers,
+          (_teamBFormatReserve.isNotEmpty
+                  ? _teamBFormatReserve.first
+                  : const Player(
+                      id: 'b2',
+                      name: 'Player 2',
+                      team: TeamSide.teamB,
+                      slot: 2,
+                      currentCourtSide: CourtSide.left,
+                    ))
+              .copyWith(slot: 2, currentCourtSide: CourtSide.left),
+        ];
       }
     }
     if (_teamAPlayers.length > format.playersPerTeam) {
@@ -192,6 +205,9 @@ class SetupController extends ChangeNotifier {
   }
 
   void addPlayer(TeamSide team, String name) {
+    final players = team == TeamSide.teamA ? _teamAPlayers : _teamBPlayers;
+    if (players.length >= _format.playersPerTeam) return;
+
     final trimmed = name.trim();
     final playerName = trimmed.isEmpty
         ? 'Player ${(team == TeamSide.teamA ? _teamAPlayers : _teamBPlayers).length + 1}'
@@ -308,6 +324,9 @@ class SetupController extends ChangeNotifier {
     if (_gamesPerMatch < 1 || _gamesPerMatch.isEven) {
       return 'Games per match must be an odd positive number.';
     }
+    if (_pointsPerGame < 1) {
+      return 'Points per game must be a positive number.';
+    }
     if (_teamAName.trim().isEmpty) return 'Team A name cannot be empty.';
     if (_teamBName.trim().isEmpty) return 'Team B name cannot be empty.';
 
@@ -341,6 +360,11 @@ class SetupController extends ChangeNotifier {
   }
 
   Match buildMatch() {
+    final validationError = validate();
+    if (validationError != null) {
+      throw StateError(validationError);
+    }
+
     final allPlayers = [..._teamAPlayers, ..._teamBPlayers];
     final server = allPlayers.firstWhere((p) => p.id == _startingServerId);
 

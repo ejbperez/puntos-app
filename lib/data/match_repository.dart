@@ -15,16 +15,24 @@ class MatchRepository {
       _box.deleteAll(matchIds);
 
   Future<List<Match>> readActive() async {
-    return _box.values
-        .map(Match.decode)
+    return (await _readMatches())
         .where((match) => !match.completed)
         .toList();
   }
 
   Future<List<Match>> readHistory() async {
-    return _box.values
-        .map(Match.decode)
-        .where((match) => match.completed)
-        .toList();
+    return (await _readMatches()).where((match) => match.completed).toList();
+  }
+
+  Future<List<Match>> _readMatches() async {
+    final matches = <Match>[];
+    for (final encoded in _box.values) {
+      try {
+        matches.add(Match.decode(encoded));
+      } on Object {
+        // A single corrupt record must not hide all other saved matches.
+      }
+    }
+    return matches;
   }
 }

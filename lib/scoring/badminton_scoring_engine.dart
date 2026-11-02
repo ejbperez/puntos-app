@@ -7,7 +7,11 @@ class BadmintonScoringEngine implements ScoringEngine {
 
   @override
   Match rallyWonBy(Match match, TeamSide winner) {
-    if (match.completed) return match;
+    if (match.completed ||
+        match.teamAPlayers.isEmpty ||
+        match.teamBPlayers.isEmpty) {
+      return match;
+    }
     final history = [...match.history, match.toSnapshot()];
     final scoreA = match.teamAScore + (winner == TeamSide.teamA ? 1 : 0);
     final scoreB = match.teamBScore + (winner == TeamSide.teamB ? 1 : 0);

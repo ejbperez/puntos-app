@@ -1,4 +1,8 @@
+import 'dart:io';
+
 import 'package:flutter_test/flutter_test.dart';
+import 'package:hive_ce/hive_ce.dart';
+import 'package:puntos_app/data/match_repository.dart';
 import 'package:puntos_app/models/match.dart';
 import 'package:puntos_app/models/match_format.dart';
 import 'package:puntos_app/models/match_rule.dart';
@@ -20,6 +24,69 @@ void main() {
     setup.editPlayerName(TeamSide.teamA, 'a1', 'Miguel Santos');
     expect(setup.teamAPlayers.first.id, 'a1');
     expect(setup.teamAPlayers.first.name, 'Miguel Santos');
+  });
+
+  test('setup player collections cannot be mutated externally', () {
+    final setup = SetupController();
+
+    expect(() => setup.teamAPlayers.add(setup.teamAPlayers.first),
+        throwsUnsupportedError);
+    expect(() => setup.teamBPlayers.clear(), throwsUnsupportedError);
+  });
+
+  test('switching formats preserves edited player names', () {
+    final setup = SetupController();
+    setup.editPlayerName(TeamSide.teamA, 'a2', 'Edited Player');
+
+    setup.setFormat(MatchFormat.singles);
+    setup.setFormat(MatchFormat.doubles);
+
+    expect(setup.teamAPlayers[1].name, 'Edited Player');
+  });
+
+  test('setup rejects non-positive point targets', () {
+    final setup = SetupController();
+    setup.setPointsPerGame(0);
+
+    expect(setup.validate(), contains('Points per game'));
+  });
+
+  test('scoring ignores a match with missing players', () {
+    final match = Match.createDefault().copyWith(
+      teamAPlayers: const [],
+      teamBPlayers: const [],
+    );
+
+    expect(const BadmintonScoringEngine().rallyWonBy(match, TeamSide.teamA),
+        same(match));
+    expect(const PickleballScoringEngine().rallyWonBy(match, TeamSide.teamA),
+        same(match));
+    expect(const TennisScoringEngine().rallyWonBy(match, TeamSide.teamA),
+        same(match));
+  });
+
+  test('repository skips malformed records and keeps valid matches', () async {
+    final directory = await Directory.systemTemp.createTemp('puntos-hive-');
+    final boxName = 'matches_${DateTime.now().microsecondsSinceEpoch}';
+    Box<String>? box;
+
+    try {
+      Hive.init(directory.path);
+      final openedBox = await Hive.openBox<String>(boxName);
+      box = openedBox;
+      final valid = Match.createDefault();
+      await openedBox.put(valid.id, valid.encode());
+      await openedBox.put('corrupt', '{not valid json');
+
+      final repository = MatchRepository(openedBox);
+      final active = await repository.readActive();
+
+      expect(active.map((match) => match.id), contains(valid.id));
+      expect(active, hasLength(1));
+    } finally {
+      if (box?.isOpen ?? false) await box!.close();
+      await directory.delete(recursive: true);
+    }
   });
 
   test('new doubles setup keeps receiver and partner on opposite court sides', () {
@@ -159,6 +226,12 @@ void main() {
     controller.createAndStartMatch(newMatch);
     expect(controller.currentMatch.id, newMatch.id);
     expect(controller.activeMatches.first.id, newMatch.id);
+  });
+
+  test('single-match workflow seeds only one active match', () {
+    final controller = MatchController();
+
+    expect(controller.activeMatches, hasLength(1));
   });
 
   test('ending a match removes it from live matches and keeps it in history', () {
