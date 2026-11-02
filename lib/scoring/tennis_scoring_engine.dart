@@ -19,24 +19,26 @@ class TennisScoringEngine implements ScoringEngine {
     final pointsB = match.tennisGamePointsB + (winner == TeamSide.teamB ? 1 : 0);
     final wonPoints = winner == TeamSide.teamA ? pointsA : pointsB;
     final lostPoints = winner == TeamSide.teamA ? pointsB : pointsA;
+    final servingScore = match.servingTeam == TeamSide.teamA ? pointsA : pointsB;
+    final serviceCourt =
+        servingScore.isEven ? CourtSide.right : CourtSide.left;
     final gameWon = match.rule.useAdvantage
         ? wonPoints >= 4 && wonPoints - lostPoints >= 2
         : wonPoints >= 4;
     if (!gameWon) {
-      final total = pointsA + pointsB;
       var playersA = match.teamAPlayers;
       var playersB = match.teamBPlayers;
       if (match.format.playersPerTeam == 1) {
         final positions = _positionSingles(
             playersA, playersB, match.servingTeam,
-            total.isEven ? CourtSide.right : CourtSide.left);
+            serviceCourt);
         playersA = positions.$1;
         playersB = positions.$2;
       }
       return match.copyWith(
         tennisGamePointsA: pointsA,
         tennisGamePointsB: pointsB,
-        serviceCourtSide: total.isEven ? CourtSide.right : CourtSide.left,
+        serviceCourtSide: serviceCourt,
         teamAPlayers: playersA,
         teamBPlayers: playersB,
         history: history,
@@ -232,8 +234,10 @@ class TennisScoringEngine implements ScoringEngine {
   }
 
   List<Player> _activePlayers(Match match) => [
-        ...match.teamAPlayers.take(match.format.playersPerTeam),
-        ...match.teamBPlayers.take(match.format.playersPerTeam),
+        for (var slot = 0; slot < match.format.playersPerTeam; slot++) ...[
+          if (slot < match.teamAPlayers.length) match.teamAPlayers[slot],
+          if (slot < match.teamBPlayers.length) match.teamBPlayers[slot],
+        ],
       ];
 
   @override

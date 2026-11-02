@@ -367,6 +367,12 @@ class SetupController extends ChangeNotifier {
 
     final allPlayers = [..._teamAPlayers, ..._teamBPlayers];
     final server = allPlayers.firstWhere((p) => p.id == _startingServerId);
+    final serviceOrder = <Player>[
+      for (var slot = 0; slot < _format.playersPerTeam; slot++) ...[
+        if (slot < _teamAPlayers.length) _teamAPlayers[slot],
+        if (slot < _teamBPlayers.length) _teamBPlayers[slot],
+      ],
+    ];
 
     final servingTeam = server.team;
     final receiverPlayers =
@@ -416,8 +422,14 @@ class SetupController extends ChangeNotifier {
       teamBGames: 0,
       servingTeam: servingTeam,
       serverNumber:
-          _sport.id == 'pickleball' && _format.playersPerTeam == 2 ? 2 : 1,
-      serviceRotationIndex: allPlayers.indexOf(server),
+          _sport.id == 'pickleball' &&
+                  _format.playersPerTeam == 2 &&
+                  _isSideOutScoring
+              ? 2
+              : 1,
+      serviceRotationIndex: _sport.id == 'tennis'
+          ? serviceOrder.indexOf(server)
+          : allPlayers.indexOf(server),
       currentServerId: _startingServerId,
       currentReceiverId: receiverPlayers.first.id,
       serviceCourtSide: CourtSide.right,

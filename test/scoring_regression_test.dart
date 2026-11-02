@@ -117,6 +117,137 @@ void main() {
     expect(result.servingTeam, TeamSide.teamB);
   });
 
+  test('side-out singles uses the new server score for court position', () {
+    final match = Match.createDefault().copyWith(
+      sport: SportCatalog.pickleball,
+      format: MatchFormat.singles,
+      teamAPlayers: [
+        Match.createDefault().teamAPlayers.first
+            .copyWith(currentCourtSide: CourtSide.right),
+      ],
+      teamBPlayers: [
+        Match.createDefault().teamBPlayers.first
+            .copyWith(currentCourtSide: CourtSide.left),
+      ],
+      teamAScore: 0,
+      teamBScore: 1,
+      servingTeam: TeamSide.teamA,
+      currentServerId: 'a1',
+      currentReceiverId: 'b1',
+      serviceCourtSide: CourtSide.right,
+      rule: const MatchRule(
+        pointsPerGame: 11,
+        gamesPerMatch: 1,
+        isSideOutScoring: true,
+      ),
+    );
+
+    final result = const PickleballScoringEngine()
+        .rallyWonBy(match, TeamSide.teamB);
+
+    expect(result.teamBScore, 1);
+    expect(result.servingTeam, TeamSide.teamB);
+    expect(result.serviceCourtSide, CourtSide.left);
+    expect(result.currentServerId, 'b1');
+  });
+
+  test('rally singles awards the point and transfers service', () {
+    final initial = Match.createDefault();
+    final match = initial.copyWith(
+      sport: SportCatalog.pickleball,
+      format: MatchFormat.singles,
+      teamAPlayers: [initial.teamAPlayers.first],
+      teamBPlayers: [initial.teamBPlayers.first],
+      teamAScore: 0,
+      teamBScore: 0,
+      servingTeam: TeamSide.teamA,
+      currentServerId: 'a1',
+      currentReceiverId: 'b1',
+      rule: const MatchRule(
+        pointsPerGame: 11,
+        gamesPerMatch: 1,
+        isSideOutScoring: false,
+      ),
+    );
+
+    final result = const PickleballScoringEngine()
+        .rallyWonBy(match, TeamSide.teamB);
+
+    expect(result.teamBScore, 1);
+    expect(result.servingTeam, TeamSide.teamB);
+    expect(result.serviceCourtSide, CourtSide.left);
+    expect(result.currentServerId, 'b1');
+    expect(result.currentReceiverId, 'a1');
+  });
+
+  test('rally doubles has no second server after a side-out', () {
+    final initial = Match.createDefault();
+    final match = initial.copyWith(
+      sport: SportCatalog.pickleball,
+      teamAPlayers: initial.teamAPlayers,
+      teamBPlayers: initial.teamBPlayers,
+      teamAScore: 0,
+      teamBScore: 0,
+      servingTeam: TeamSide.teamA,
+      serverNumber: 1,
+      currentServerId: 'a1',
+      currentReceiverId: 'b1',
+      serviceCourtSide: CourtSide.right,
+      rule: const MatchRule(
+        pointsPerGame: 11,
+        gamesPerMatch: 1,
+        isSideOutScoring: false,
+      ),
+    );
+
+    final result = const PickleballScoringEngine()
+        .rallyWonBy(match, TeamSide.teamB);
+
+    expect(result.teamBScore, 1);
+    expect(result.servingTeam, TeamSide.teamB);
+    expect(result.serverNumber, 1);
+    expect(result.serviceCourtSide, CourtSide.right);
+    expect(result.currentServerId, 'b2');
+  });
+
+  test('new rally-scoring doubles setup starts with one server', () {
+    final setup = SetupController();
+    setup.setSport(SportCatalog.pickleball);
+    setup.setSideOutScoring(false);
+
+    final match = setup.buildMatch();
+
+    expect(match.serverNumber, 1);
+    expect(match.rule.isSideOutScoring, isFalse);
+  });
+
+  test('rally scoring cannot win a game while receiving', () {
+    final initial = Match.createDefault();
+    final match = initial.copyWith(
+      sport: SportCatalog.pickleball,
+      format: MatchFormat.singles,
+      teamAPlayers: [initial.teamAPlayers.first],
+      teamBPlayers: [initial.teamBPlayers.first],
+      teamAScore: 10,
+      teamBScore: 10,
+      servingTeam: TeamSide.teamA,
+      currentServerId: 'a1',
+      currentReceiverId: 'b1',
+      rule: const MatchRule(
+        pointsPerGame: 11,
+        gamesPerMatch: 1,
+        isSideOutScoring: false,
+      ),
+    );
+
+    final result = const PickleballScoringEngine()
+        .rallyWonBy(match, TeamSide.teamB);
+
+    expect(result.teamBScore, 11);
+    expect(result.completed, isFalse);
+    expect(result.servingTeam, TeamSide.teamB);
+  });
+
   test('tennis uses terminology and handles deuce/advantage', () {
     var match = Match.createDefault().copyWith(
       sport: SportCatalog.tennis,
@@ -141,6 +272,83 @@ void main() {
     expect(match.displayScoreA, 'AD');
     match = engine.rallyWonBy(match, TeamSide.teamB);
     expect(match.displayScoreA, 'Deuce');
+  });
+
+  test('tennis service court follows the serving side score', () {
+    final initial = Match.createDefault();
+    final match = initial.copyWith(
+      sport: SportCatalog.tennis,
+      format: MatchFormat.singles,
+      teamAPlayers: [initial.teamAPlayers.first],
+      teamBPlayers: [initial.teamBPlayers.first],
+      servingTeam: TeamSide.teamA,
+      tennisGamePointsA: 0,
+      tennisGamePointsB: 1,
+      currentServerId: 'a1',
+      currentReceiverId: 'b1',
+      serviceCourtSide: CourtSide.left,
+      rule: const MatchRule(pointsPerGame: 6, gamesPerMatch: 3),
+    );
+
+    final result = const TennisScoringEngine()
+        .rallyWonBy(match, TeamSide.teamA);
+
+    expect(result.tennisGamePointsA, 1);
+    expect(result.tennisGamePointsB, 1);
+    expect(result.serviceCourtSide, CourtSide.left);
+  });
+
+  test('tennis doubles rotates service through alternating teams', () {
+    var match = Match.createDefault().copyWith(
+      sport: SportCatalog.tennis,
+      format: MatchFormat.doubles,
+      rule: const MatchRule(
+        pointsPerGame: 6,
+        gamesPerMatch: 3,
+        useAdvantage: false,
+      ),
+      currentServerId: 'a1',
+      currentReceiverId: 'b1',
+      servingTeam: TeamSide.teamA,
+    );
+    const engine = TennisScoringEngine();
+
+    for (var i = 0; i < 4; i++) {
+      match = engine.rallyWonBy(match, TeamSide.teamA);
+    }
+    expect(match.currentServerId, 'b1');
+
+    for (var i = 0; i < 4; i++) {
+      match = engine.rallyWonBy(match, TeamSide.teamB);
+    }
+    expect(match.currentServerId, 'a2');
+  });
+
+  test('badminton applies the standard 20-all and 29-all endings', () {
+    final engine = const BadmintonScoringEngine();
+    final base = Match.createDefault().copyWith(
+      rule: const MatchRule(
+        pointsPerGame: 21,
+        gamesPerMatch: 3,
+        winByTwo: true,
+        maxPoints: 30,
+      ),
+    );
+
+    final atTwentyAll = engine.rallyWonBy(
+      base.copyWith(teamAScore: 20, teamBScore: 20), TeamSide.teamA);
+    expect(atTwentyAll.teamAGames, 0);
+    expect(atTwentyAll.teamAScore, 21);
+
+    final atTwentyTwo = engine.rallyWonBy(
+      atTwentyAll.copyWith(teamAScore: 21, teamBScore: 21), TeamSide.teamA);
+    expect(atTwentyTwo.teamAGames, 0);
+    expect(atTwentyTwo.teamAScore, 22);
+
+    final atThirty = engine.rallyWonBy(
+      base.copyWith(teamAScore: 29, teamBScore: 29), TeamSide.teamB);
+    expect(atThirty.teamBGames, 1);
+    expect(atThirty.teamBScore, 0);
   });
 
   test('pickleball undo restores service and player positions', () {

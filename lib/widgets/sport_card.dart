@@ -17,19 +17,6 @@ class SportCard extends StatelessWidget {
   final VoidCallback onTap;
   final bool compact;
 
-  Widget _buildIcon(double size, Color color) {
-    switch (sport.id) {
-      case 'badminton':
-        return ShuttlecockIcon(size: size, color: color);
-      case 'pickleball':
-        return PickleballPaddleIcon(size: size, color: color);
-      case 'tennis':
-        return TennisBallIcon(size: size, color: color);
-      default:
-        return ShuttlecockIcon(size: size, color: color);
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     if (compact) {
@@ -57,9 +44,10 @@ class SportCard extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              _buildIcon(
-                26,
-                isSelected
+              SportIcon(
+                sportId: sport.id,
+                size: 26,
+                color: isSelected
                     ? AppColors.primaryBrown
                     : AppColors.textSecondaryDark,
               ),
@@ -105,7 +93,7 @@ class SportCard extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            _buildIcon(30, Colors.white),
+            SportIcon(sportId: sport.id, size: 30, color: Colors.white),
             const SizedBox(height: 8),
             Text(
               sport.name,

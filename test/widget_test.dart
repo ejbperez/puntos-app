@@ -4,6 +4,9 @@ import 'package:puntos_app/app.dart';
 import 'package:puntos_app/models/match.dart';
 import 'package:puntos_app/models/player.dart';
 import 'package:puntos_app/scoring/badminton_scoring_engine.dart';
+import 'package:puntos_app/models/sport.dart';
+import 'package:puntos_app/widgets/sport_card.dart';
+import 'package:puntos_app/widgets/sports_icons.dart';
 
 void main() {
   group('ScoringEngine Unit Tests', () {
@@ -71,6 +74,27 @@ void main() {
   });
 
   group('Puntos App Widget Tests', () {
+    testWidgets('sport cards show the matching sport icon',
+        (WidgetTester tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Row(
+            children: SportCatalog.supported
+                .map((sport) => SportCard(
+                      sport: sport,
+                      isSelected: false,
+                      onTap: () {},
+                    ))
+                .toList(),
+          ),
+        ),
+      );
+
+      expect(find.byType(ShuttlecockIcon), findsOneWidget);
+      expect(find.byType(PickleballPaddleIcon), findsOneWidget);
+      expect(find.byType(TennisBallIcon), findsOneWidget);
+    });
+
     testWidgets(
         'App smoke test: loads Home Screen and navigates to Match Setup',
         (WidgetTester tester) async {

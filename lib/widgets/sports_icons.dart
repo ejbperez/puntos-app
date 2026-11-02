@@ -1,6 +1,33 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
+/// Uses the correct visual marker for each supported sport.
+class SportIcon extends StatelessWidget {
+  const SportIcon({
+    super.key,
+    required this.sportId,
+    this.size = 24,
+    this.color = Colors.white,
+  });
+
+  final String sportId;
+  final double size;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    switch (sportId) {
+      case 'pickleball':
+        return PickleballPaddleIcon(size: size, color: color);
+      case 'tennis':
+        return TennisBallIcon(size: size, color: color);
+      case 'badminton':
+      default:
+        return ShuttlecockIcon(size: size, color: color);
+    }
+  }
+}
+
 class ShuttlecockIcon extends StatelessWidget {
   const ShuttlecockIcon({
     super.key,

@@ -160,12 +160,29 @@ class HomeScreen extends StatelessWidget {
         child: Stack(
           fit: StackFit.expand,
           children: [
-            // Background image with fallback
-            Image.asset(
-              'assets/images/badminton_hero.jpg',
-              fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) => Container(
-                color: AppColors.darkBackground,
+            Container(
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [AppColors.darkBackground, AppColors.primaryBrown],
+                ),
+              ),
+            ),
+            Positioned(
+              right: -8,
+              top: 20,
+              child: Opacity(
+                opacity: 0.2,
+                child: Row(
+                  children: const [
+                    SportIcon(sportId: 'badminton', size: 72),
+                    SizedBox(width: 8),
+                    SportIcon(sportId: 'pickleball', size: 72),
+                    SizedBox(width: 8),
+                    SportIcon(sportId: 'tennis', size: 72),
+                  ],
+                ),
               ),
             ),
             // Gradient overlay

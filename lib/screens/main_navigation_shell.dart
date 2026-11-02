@@ -83,7 +83,7 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
                   unselectedColor: unselectedColor,
                 ),
                 _buildNavItem(
-                  index: 3,
+                  index: 2,
                   label: 'Settings',
                   icon: const Icon(Icons.settings_outlined, size: 22),
                   selectedColor: selectedColor,

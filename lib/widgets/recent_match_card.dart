@@ -17,19 +17,6 @@ class RecentMatchCard extends StatelessWidget {
   final String? statusOverride;
   final VoidCallback? onDelete;
 
-  Widget _buildSportIcon(String sportId) {
-    switch (sportId) {
-      case 'badminton':
-        return const ShuttlecockIcon(size: 20, color: Colors.white);
-      case 'pickleball':
-        return const PickleballPaddleIcon(size: 20, color: Colors.white);
-      case 'tennis':
-        return const TennisBallIcon(size: 20, color: Colors.white);
-      default:
-        return const ShuttlecockIcon(size: 20, color: Colors.white);
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final status = statusOverride ?? (match.completed ? 'Completed' : 'Live');
@@ -56,7 +43,13 @@ class RecentMatchCard extends StatelessWidget {
                 color: match.sport.cardColor,
                 shape: BoxShape.circle,
               ),
-              child: Center(child: _buildSportIcon(match.sport.id)),
+              child: Center(
+                child: SportIcon(
+                  sportId: match.sport.id,
+                  size: 20,
+                  color: Colors.white,
+                ),
+              ),
             ),
             const SizedBox(width: 12),
 

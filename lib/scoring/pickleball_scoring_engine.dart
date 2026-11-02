@@ -14,6 +14,7 @@ class PickleballScoringEngine implements ScoringEngine {
     }
     final history = [...match.history, match.toSnapshot()];
     final sideOut = match.rule.isSideOutScoring;
+    final doubles = match.format.playersPerTeam == 2;
     final servingWon = match.servingTeam == winner;
     final scores = [match.teamAScore, match.teamBScore];
     final earnsPoint = !sideOut || servingWon;
@@ -22,7 +23,8 @@ class PickleballScoringEngine implements ScoringEngine {
     final winnerScore = winner == TeamSide.teamA ? scores[0] : scores[1];
     final loserScore = winner == TeamSide.teamA ? scores[1] : scores[0];
     final gameWon = winnerScore >= match.rule.pointsPerGame &&
-        (!match.rule.winByTwo || winnerScore - loserScore >= 2);
+        (!match.rule.winByTwo || winnerScore - loserScore >= 2) &&
+        (sideOut || servingWon);
     if (gameWon) {
       final gamesA = match.teamAGames + (winner == TeamSide.teamA ? 1 : 0);
       final gamesB = match.teamBGames + (winner == TeamSide.teamB ? 1 : 0);
@@ -50,17 +52,18 @@ class PickleballScoringEngine implements ScoringEngine {
     var serverId = match.currentServerId;
     var receiverId = match.currentReceiverId;
 
-    if (!sideOut || servingWon) {
-      // A serving rally win keeps service. In doubles, the partners exchange
-      // courts; the same player remains the server.
-      if (match.format.playersPerTeam == 2 && servingWon) {
+    if (servingWon) {
+      // A serving win keeps service. In doubles, the partners exchange
+      // courts while the same player remains the server.
+      if (doubles) {
         if (servingTeam == TeamSide.teamA) {
           playersA = _swap(playersA);
         } else {
           playersB = _swap(playersB);
         }
       }
-      serviceCourt = (winner == TeamSide.teamA ? scores[0] : scores[1]).isEven
+      final servingScore = servingTeam == TeamSide.teamA ? scores[0] : scores[1];
+      serviceCourt = servingScore.isEven
           ? CourtSide.right
           : CourtSide.left;
       final serving = servingTeam == TeamSide.teamA ? playersA : playersB;
@@ -72,8 +75,8 @@ class PickleballScoringEngine implements ScoringEngine {
       final receiver = _receiverFor(receiving, serviceCourt.opposite);
       serverId = server.id;
       receiverId = receiver.id;
-    } else if (match.format.playersPerTeam == 2 && serverNumber == 1) {
-      // Traditional doubles: the first team begins with its second server.
+    } else if (sideOut && doubles && serverNumber == 1) {
+      // Traditional doubles gives the partner the second service opportunity.
       serverNumber = 2;
       final serving = servingTeam == TeamSide.teamA ? playersA : playersB;
       final receiving = servingTeam == TeamSide.teamA ? playersB : playersA;
@@ -85,18 +88,35 @@ class PickleballScoringEngine implements ScoringEngine {
           orElse: () => receiving.first).id;
       serviceCourt = server.currentCourtSide;
     } else {
-      // Side-out: singles changes immediately; doubles changes after server 2.
+      // A side-out transfers service. Rally-scoring doubles has no second
+      // server, while traditional doubles reaches this branch after server 2.
       servingTeam = winner;
-      serverNumber = match.format.playersPerTeam == 2 ? 1 : 1;
-      serviceCourt = CourtSide.right;
-      final serving = winner == TeamSide.teamA ? playersA : playersB;
-      final receiving = winner == TeamSide.teamA ? playersB : playersA;
+      serverNumber = 1;
+
+      if (doubles && !sideOut) {
+        // In rally-scoring doubles, the new serving team changes positions
+        // after every side-out, then serves from the right court.
+        if (servingTeam == TeamSide.teamA) {
+          playersA = _swap(playersA);
+        } else {
+          playersB = _swap(playersB);
+        }
+        serviceCourt = CourtSide.right;
+      } else if (doubles) {
+        // Traditional doubles always starts a new service turn from right.
+        serviceCourt = CourtSide.right;
+      } else {
+        // Singles uses the new server's score to select the service court.
+        final servingScore = servingTeam == TeamSide.teamA ? scores[0] : scores[1];
+        serviceCourt = servingScore.isEven ? CourtSide.right : CourtSide.left;
+      }
+
+      final serving = servingTeam == TeamSide.teamA ? playersA : playersB;
+      final receiving = servingTeam == TeamSide.teamA ? playersB : playersA;
       final server = serving.firstWhere(
-          (p) => p.currentCourtSide == CourtSide.right,
-          orElse: () => serving.first);
-      final receiver = receiving.firstWhere(
-          (p) => p.currentCourtSide == CourtSide.right.opposite,
-          orElse: () => receiving.first);
+        (p) => p.currentCourtSide == serviceCourt,
+        orElse: () => serving.first);
+      final receiver = _receiverFor(receiving, serviceCourt.opposite);
       serverId = server.id;
       receiverId = receiver.id;
     }
@@ -131,18 +151,47 @@ class PickleballScoringEngine implements ScoringEngine {
 
   Match _startGame(Match match, TeamSide winner, int gamesA, int gamesB,
       List<MatchSnapshot> history) {
-    final serving = winner == TeamSide.teamA ? match.teamAPlayers : match.teamBPlayers;
-    final receiving = winner == TeamSide.teamA ? match.teamBPlayers : match.teamAPlayers;
-    final server = serving.first;
-    final receiver = _receiverFor(receiving, server.currentCourtSide.opposite);
-    var nextPlayersA = winner == TeamSide.teamA ? serving : match.teamAPlayers;
-    var nextPlayersB = winner == TeamSide.teamB ? serving : match.teamBPlayers;
-    if (match.format.playersPerTeam == 1) {
-      nextPlayersA = _setSingleSide(
-          nextPlayersA, winner == TeamSide.teamA ? CourtSide.right : CourtSide.left);
-      nextPlayersB = _setSingleSide(
-          nextPlayersB, winner == TeamSide.teamB ? CourtSide.right : CourtSide.left);
+    var nextPlayersA = [...match.teamAPlayers];
+    var nextPlayersB = [...match.teamBPlayers];
+    final doubles = match.format.playersPerTeam == 2;
+    final serviceCourt = CourtSide.right;
+
+    if (doubles) {
+      final serving = winner == TeamSide.teamA ? nextPlayersA : nextPlayersB;
+      final receiverPlayers =
+          winner == TeamSide.teamA ? nextPlayersB : nextPlayersA;
+      final server = serving.firstWhere(
+        (p) => p.currentCourtSide == serviceCourt,
+        orElse: () => serving.first);
+      final receiver = _receiverFor(receiverPlayers, serviceCourt.opposite);
+
+      return match.copyWith(
+        teamAScore: 0,
+        teamBScore: 0,
+        currentGame: match.currentGame + 1,
+        teamAGames: gamesA,
+        teamBGames: gamesB,
+        servingTeam: winner,
+        serverNumber: match.rule.isSideOutScoring ? 2 : 1,
+        currentServerId: server.id,
+        currentReceiverId: receiver.id,
+        serviceCourtSide: serviceCourt,
+        teamAPlayers: _markServer(nextPlayersA, server.id),
+        teamBPlayers: _markServer(nextPlayersB, server.id),
+        history: history,
+      );
     }
+
+    nextPlayersA = _setSingleSide(nextPlayersA, winner == TeamSide.teamA
+        ? CourtSide.right
+        : CourtSide.left);
+    nextPlayersB = _setSingleSide(nextPlayersB, winner == TeamSide.teamB
+        ? CourtSide.right
+        : CourtSide.left);
+    final serving = winner == TeamSide.teamA ? nextPlayersA : nextPlayersB;
+    final receiving = winner == TeamSide.teamA ? nextPlayersB : nextPlayersA;
+    final server = serving.first;
+    final receiver = receiving.first;
     return match.copyWith(
       teamAScore: 0,
       teamBScore: 0,
@@ -150,10 +199,10 @@ class PickleballScoringEngine implements ScoringEngine {
       teamAGames: gamesA,
       teamBGames: gamesB,
       servingTeam: winner,
-      serverNumber: match.format.playersPerTeam == 2 ? 2 : 1,
+      serverNumber: 1,
       currentServerId: server.id,
       currentReceiverId: receiver.id,
-      serviceCourtSide: CourtSide.right,
+      serviceCourtSide: serviceCourt,
       teamAPlayers: _markServer(nextPlayersA, server.id),
       teamBPlayers: _markServer(nextPlayersB, server.id),
       history: history,

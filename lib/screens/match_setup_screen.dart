@@ -108,17 +108,6 @@ class _MatchSetupScreenState extends State<MatchSetupScreen> {
         ),
       ),
       centerTitle: true,
-      actions: [
-        IconButton(
-          icon:
-              const Icon(Icons.save_outlined, color: AppColors.textPrimaryDark),
-          onPressed: () {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Setup template saved.')),
-            );
-          },
-        ),
-      ],
     );
   }
 
