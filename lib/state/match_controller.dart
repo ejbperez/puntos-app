@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import '../data/match_repository.dart';
 import '../models/match.dart';
@@ -45,8 +46,17 @@ class MatchController extends ChangeNotifier {
   }
 
   void _initializeData() {
-    // Seed default match matching Phone 2 mockup (Badminton Doubles 18 - 16)
     _currentMatch = Match.createDefault();
+
+    // Keep demo data available for development previews, but never ship it in
+    // a production build. Persisted user matches are loaded separately below.
+    if (!kDebugMode) {
+      _activeMatches = [];
+      _completedMatches = [];
+      return;
+    }
+
+    // Seed default match matching Phone 2 mockup (Badminton Doubles 18 - 16)
 
     // Completed Match Archive (Pickleball)
     final completedCourt3 = Match(
@@ -98,7 +108,7 @@ class MatchController extends ChangeNotifier {
           : (completed.isNotEmpty ? completed.first : _currentMatch);
       notifyListeners();
     } catch (_) {
-      // Keep the seeded in-memory state if a corrupt or unavailable record is found.
+      // Keep the initialized in-memory state if a corrupt or unavailable record is found.
     }
   }
 
