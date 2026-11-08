@@ -5,6 +5,7 @@ import 'package:puntos_app/models/match.dart';
 import 'package:puntos_app/models/player.dart';
 import 'package:puntos_app/scoring/badminton_scoring_engine.dart';
 import 'package:puntos_app/models/sport.dart';
+import 'package:puntos_app/widgets/recent_match_card.dart';
 import 'package:puntos_app/widgets/sport_card.dart';
 import 'package:puntos_app/widgets/sports_icons.dart';
 
@@ -93,6 +94,27 @@ void main() {
       expect(find.byType(ShuttlecockIcon), findsOneWidget);
       expect(find.byType(PickleballPaddleIcon), findsOneWidget);
       expect(find.byType(TennisBallIcon), findsOneWidget);
+    });
+
+    testWidgets('completed match cards show the finished date and time',
+        (WidgetTester tester) async {
+      final match = Match.createDefault().copyWith(
+        completed: true,
+        finishedAt: DateTime(2026, 11, 9, 14, 5),
+      );
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: RecentMatchCard(
+              match: match,
+              onTap: () {},
+            ),
+          ),
+        ),
+      );
+
+      expect(find.text('Nov 9, 2026 · 2:05 PM'), findsOneWidget);
     });
 
     testWidgets(

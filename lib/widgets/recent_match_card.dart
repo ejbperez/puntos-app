@@ -17,6 +17,28 @@ class RecentMatchCard extends StatelessWidget {
   final String? statusOverride;
   final VoidCallback? onDelete;
 
+  String _formatFinishedAt(DateTime value) {
+    const months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
+    final hour = value.hour % 12 == 0 ? 12 : value.hour % 12;
+    final minute = value.minute.toString().padLeft(2, '0');
+    final period = value.hour >= 12 ? 'PM' : 'AM';
+    return '${months[value.month - 1]} ${value.day}, ${value.year} · '
+        '$hour:$minute $period';
+  }
+
   @override
   Widget build(BuildContext context) {
     final status = statusOverride ?? (match.completed ? 'Completed' : 'Live');
@@ -128,12 +150,27 @@ class RecentMatchCard extends StatelessWidget {
                     ),
                   )
                 else
-                  const Text(
-                    'Completed',
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: AppColors.textMutedDark,
-                    ),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      const Text(
+                        'Completed',
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: AppColors.textMutedDark,
+                        ),
+                      ),
+                      if (match.finishedAt != null) ...[
+                        const SizedBox(height: 2),
+                        Text(
+                          _formatFinishedAt(match.finishedAt!),
+                          style: const TextStyle(
+                            fontSize: 10,
+                            color: AppColors.textMutedDark,
+                          ),
+                        ),
+                      ],
+                    ],
                   ),
               ],
             ),

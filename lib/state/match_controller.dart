@@ -85,6 +85,8 @@ class MatchController extends ChangeNotifier {
           pointsPerGame: 11, gamesPerMatch: 1, isSideOutScoring: true),
       startedAt: DateTime.now().subtract(const Duration(hours: 2)),
       completed: true,
+      finishedAt:
+          DateTime.now().subtract(const Duration(hours: 1, minutes: 30)),
       winner: TeamSide.teamA,
     );
 
